@@ -31,6 +31,16 @@ class Statement:
                     )
                 )
 
+    def __eq__(self, other: object) -> bool:
+        """Override equality to compare statements based on content and timestamp"""
+        if isinstance(other, Statement):
+            return self.content == other.content and self.timestamp == other.timestamp
+        return False
+
+    def __hash__(self) -> int:
+        """Override hash to ensure unique identification in sets"""
+        return hash((self.content, self.timestamp))
+
 @dataclass
 class SystemPrimitive:
     """Represents a system primitive derived from statements"""
@@ -233,10 +243,14 @@ class CyberneticSystem:
                                         if correlation.manifest_purpose:
                                             self.manifest_purpose = correlation.manifest_purpose
                                             new_statements = self.manifest_purpose.generate_statements()
-                                            self.statements.extend(new_statements)
-                                            cycle_metrics["generated_statements"] += len(new_statements)
+                                            
+                                            # Add new statements only if they don't already exist
+                                            for new_statement in new_statements:
+                                                if new_statement not in self.statements:
+                                                    self.statements.append(new_statement)
+                                                    cycle_metrics["generated_statements"] += 1
 
-                        cycle_metrics["processed_statements"] += 1
+                            cycle_metrics["processed_statements"] += 1
 
         if cycle_metrics["processed_statements"] > 0:
             cycle_metrics["average_correlation"] /= cycle_metrics["processed_statements"]
